@@ -9,8 +9,8 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
 import { ModeToggle } from "@/components/mode-toggle";
 import { usePathname } from "next/navigation";
 
@@ -28,7 +28,7 @@ export default function DashboardLayout({
     ? "teacher"
     : pathname.includes("/dashboard/student")
     ? "student"
-    : "guest"; // Opcional para manejar rutas no reconocidas
+    : "guest";
 
   return (
     <SidebarProvider>
@@ -54,7 +54,7 @@ export default function DashboardLayout({
             <ModeToggle />
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
+        <main className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

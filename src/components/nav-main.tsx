@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, ChevronDown, type LucideIcon } from "lucide-react";
+import { ChevronDown, type LucideIcon } from "lucide-react";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -32,25 +32,22 @@ export function NavMain({
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) => (
-          <Collapsible
-            key={item.title}
-            defaultOpen={false}
-            className="group/collapsible"
-          >
-            <SidebarMenuItem>
-              <CollapsibleTrigger asChild>
-                <SidebarMenuButton tooltip={item.title}>
-                  {item.icon && <item.icon />}
-                  <span>{item.title}</span>
-                  {item.items ? (
+        {items.map((item) =>
+          item.items && item.items.length > 0 ? (
+            // Si tiene subitems, usar colapsables
+            <Collapsible
+              key={item.title}
+              defaultOpen={false}
+              className="group/collapsible"
+            >
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton tooltip={item.title}>
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
                     <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                  ) : (
-                    <ChevronRight className="ml-auto" />
-                  )}
-                </SidebarMenuButton>
-              </CollapsibleTrigger>
-              {item.items && (
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
                 <CollapsibleContent>
                   {item.items.map((subItem) => (
                     <Link
@@ -62,10 +59,20 @@ export function NavMain({
                     </Link>
                   ))}
                 </CollapsibleContent>
-              )}
+              </SidebarMenuItem>
+            </Collapsible>
+          ) : (
+            // Si no tiene subitems, renderizar como enlace directo
+            <SidebarMenuItem key={item.title}>
+              <Link href={item.url} className="w-full">
+                <SidebarMenuButton tooltip={item.title}>
+                  {item.icon && <item.icon />}
+                  <span>{item.title}</span>
+                </SidebarMenuButton>
+              </Link>
             </SidebarMenuItem>
-          </Collapsible>
-        ))}
+          )
+        )}
       </SidebarMenu>
     </SidebarGroup>
   );
