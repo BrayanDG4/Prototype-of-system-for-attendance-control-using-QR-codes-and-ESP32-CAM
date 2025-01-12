@@ -5,22 +5,16 @@ export const sidebarOptions = {
     {
       label: "Dashboard",
       href: "/dashboard/admin",
-      icon: Home, // Ícono de inicio
-      items: null, // Directo, sin subitems
+      icon: Home,
+      items: null,
     },
     {
       label: "Users",
       href: "/dashboard/admin/users",
       icon: Users,
       items: [
-        {
-          title: "Add User",
-          href: "/dashboard/admin/users/add",
-        },
-        {
-          title: "View Users",
-          href: "/dashboard/admin/users/view",
-        },
+        { title: "Add User", href: "/dashboard/admin/users/add" },
+        { title: "View Users", href: "/dashboard/admin/users/view" },
       ],
     },
     {
@@ -28,14 +22,8 @@ export const sidebarOptions = {
       href: "/dashboard/admin/reports",
       icon: FileText,
       items: [
-        {
-          title: "Generate Report",
-          href: "/dashboard/admin/reports/generate",
-        },
-        {
-          title: "View All Reports",
-          href: "/dashboard/admin/reports/view",
-        },
+        { title: "Generate Report", href: "/dashboard/admin/reports/generate" },
+        { title: "View All Reports", href: "/dashboard/admin/reports/view" },
       ],
     },
   ],
@@ -43,37 +31,28 @@ export const sidebarOptions = {
     {
       label: "Dashboard",
       href: "/dashboard/teacher",
-      icon: Home, // Ícono de inicio
-      items: null, // Directo, sin subitems
+      icon: Home,
+      items: null,
+    },
+    {
+      label: "Groups",
+      href: "/dashboard/teacher/groups",
+      icon: BookOpen,
+      items: null,
+    },
+    {
+      label: "Attendance by Group",
+      href: "/dashboard/teacher/attendance-by-group",
+      icon: ClipboardList,
+      items: null,
     },
     {
       label: "Class Management",
       href: "/dashboard/teacher/classes",
       icon: BookOpen,
       items: [
-        {
-          title: "Add Class",
-          href: "/dashboard/teacher/classes/add",
-        },
-        {
-          title: "View Classes",
-          href: "/dashboard/teacher/classes/view",
-        },
-      ],
-    },
-    {
-      label: "Attendance",
-      href: "/dashboard/teacher/attendance",
-      icon: ClipboardList,
-      items: [
-        {
-          title: "Enable Attendance",
-          href: "/dashboard/teacher/attendance/enable",
-        },
-        {
-          title: "Attendance Records",
-          href: "/dashboard/teacher/attendance/records",
-        },
+        { title: "Add Class", href: "/dashboard/teacher/classes/add" },
+        { title: "View Classes", href: "/dashboard/teacher/classes/view" },
       ],
     },
   ],
@@ -81,22 +60,16 @@ export const sidebarOptions = {
     {
       label: "Dashboard",
       href: "/dashboard/student",
-      icon: Home, // Ícono de inicio
-      items: null, // Directo, sin subitems
+      icon: Home,
+      items: null,
     },
     {
       label: "My Courses",
       href: "/dashboard/student/courses",
       icon: BookOpen,
       items: [
-        {
-          title: "All Courses",
-          href: "/dashboard/student/courses/all",
-        },
-        {
-          title: "Enroll",
-          href: "/dashboard/student/courses/enroll",
-        },
+        { title: "All Courses", href: "/dashboard/student/courses/all" },
+        { title: "Enroll", href: "/dashboard/student/courses/enroll" },
       ],
     },
     {
@@ -104,10 +77,7 @@ export const sidebarOptions = {
       href: "/dashboard/student/profile",
       icon: Users,
       items: [
-        {
-          title: "Edit Profile",
-          href: "/dashboard/student/profile/edit",
-        },
+        { title: "Edit Profile", href: "/dashboard/student/profile/edit" },
         {
           title: "Achievements",
           href: "/dashboard/student/profile/achievements",

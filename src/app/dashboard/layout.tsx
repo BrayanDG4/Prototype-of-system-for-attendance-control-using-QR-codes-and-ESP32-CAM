@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import {
@@ -13,6 +14,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { ModeToggle } from "@/components/mode-toggle";
 import { usePathname } from "next/navigation";
+import { UserButton } from "@clerk/nextjs";
 
 export default function DashboardLayout({
   children,
@@ -32,7 +34,7 @@ export default function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <AppSidebar role={role} />
+      {role !== "guest" && <AppSidebar role={role} />}
       <SidebarInset>
         <header className="flex h-16 items-center gap-2">
           <div className="flex items-center gap-2 px-4">
@@ -41,16 +43,21 @@ export default function DashboardLayout({
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Dashboard</BreadcrumbPage>
+                  <Link href={`/dashboard/${role}`}>
+                    <BreadcrumbPage>Dashboard</BreadcrumbPage>
+                  </Link>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>{role}</BreadcrumbPage>
+                  <Link href={`/dashboard/${role}`}>
+                    <BreadcrumbPage>{role}</BreadcrumbPage>
+                  </Link>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <div className="ml-auto px-4">
+          <div className="ml-auto px-4 flex gap-4">
+            <UserButton />
             <ModeToggle />
           </div>
         </header>
