@@ -59,30 +59,18 @@ export const sidebarOptions = {
   student: [
     {
       label: "Dashboard",
-      href: "/dashboard/student",
       icon: Home,
-      items: null,
+      href: "/dashboard/student",
     },
     {
-      label: "My Courses",
-      href: "/dashboard/student/courses",
+      label: "Grupos",
       icon: BookOpen,
-      items: [
-        { title: "All Courses", href: "/dashboard/student/courses/all" },
-        { title: "Enroll", href: "/dashboard/student/courses/enroll" },
-      ],
+      href: "/dashboard/student/groups",
     },
     {
-      label: "Profile",
-      href: "/dashboard/student/profile",
-      icon: Users,
-      items: [
-        { title: "Edit Profile", href: "/dashboard/student/profile/edit" },
-        {
-          title: "Achievements",
-          href: "/dashboard/student/profile/achievements",
-        },
-      ],
+      label: "Reportes",
+      icon: FileText,
+      href: "/dashboard/student/reports",
     },
   ],
 };

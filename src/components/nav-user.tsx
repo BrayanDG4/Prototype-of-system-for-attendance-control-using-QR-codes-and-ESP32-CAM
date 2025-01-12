@@ -24,7 +24,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useRouter } from "next/navigation";
-import { UserButton } from "@clerk/nextjs";
 
 export function NavUser({
   user,
