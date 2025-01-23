@@ -31,9 +31,10 @@ type Group = {
 };
 
 export default function AttendanceByGroup() {
+  const today = new Date().toISOString().split("T")[0];
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
-  const [filterDate, setFilterDate] = useState("");
+  const [filterDate, setFilterDate] = useState(today);
   const { toast } = useToast();
   const { user } = useUser(); // Obtener datos del usuario autenticado
 
@@ -80,7 +81,7 @@ export default function AttendanceByGroup() {
       });
 
       if (!response.ok) {
-        // Extraer el mensaje de error del cuerpo de la respuesta
+        // Extraer el mensaje del error del cuerpo de la respuesta
         const errorData = await response.json();
         throw new Error(
           errorData.message || "Error al registrar la asistencia manual."
@@ -89,6 +90,7 @@ export default function AttendanceByGroup() {
 
       const updatedAttendance = await response.json();
 
+      // Actualizar la asistencia en el frontend
       setGroups((prevGroups) =>
         prevGroups.map((group) =>
           group.id === groupId
