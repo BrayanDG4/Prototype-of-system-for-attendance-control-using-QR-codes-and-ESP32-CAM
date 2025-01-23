@@ -1,16 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 import {
   Table,
   TableBody,
@@ -20,19 +12,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import ManualAttendanceDialog from "@/components/dashboard/teacher/ManualAttendanceDialog";
+import { useUser } from "@clerk/nextjs";
 
 type StudentAttendance = {
-  id: string;
-  name: string;
-  email: string;
-  date: string;
+  studentName: string;
+  studentEmail: string;
+  attendedAt: string;
   status: "Present" | "Absent";
 };
 
@@ -44,62 +31,94 @@ type Group = {
 };
 
 export default function AttendanceByGroup() {
-  const [groups, setGroups] = useState<Group[]>([
-    {
-      id: "1",
-      name: "Cálculo 1",
-      attendance: [
-        {
-          id: "1",
-          name: "Juan Pérez",
-          email: "juan.perez@example.com",
-          date: "2025-01-09",
-          status: "Present",
-        },
-      ],
-      students: [
-        { id: "1", name: "Juan Pérez", email: "juan.perez@example.com" },
-        { id: "2", name: "María Gómez", email: "maria.gomez@example.com" },
-      ],
-    },
-    { id: "2", name: "Física 1", attendance: [], students: [] },
-  ]);
-
+  const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [filterDate, setFilterDate] = useState("");
+  const { toast } = useToast();
+  const { user } = useUser(); // Obtener datos del usuario autenticado
 
-  const handleManualAttendance = (
+  // Fetch groups from backend
+  useEffect(() => {
+    const fetchGroups = async () => {
+      if (!user?.id) return;
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL;
+        const response = await fetch(
+          `${backendUrl}/class-group/teacher/${user.id}/attendance`
+        );
+        if (!response.ok) {
+          throw new Error("Error al obtener los datos de los grupos.");
+        }
+        const data = await response.json();
+        setGroups(data);
+      } catch (error) {
+        console.error(error);
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los datos de los grupos.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchGroups();
+  }, [user?.id, toast]);
+
+  const handleManualAttendance = async (
     groupId: string,
     studentId: string,
     date: string
   ) => {
-    setGroups((prevGroups) =>
-      prevGroups.map((group) =>
-        group.id === groupId
-          ? {
-              ...group,
-              attendance: [
-                ...group.attendance,
-                {
-                  id: studentId,
-                  name:
-                    group.students.find((s) => s.id === studentId)?.name ||
-                    "Desconocido",
-                  email:
-                    group.students.find((s) => s.id === studentId)?.email ||
-                    "Desconocido",
-                  date,
-                  status: "Present",
-                },
-              ],
-            }
-          : group
-      )
-    );
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL;
+      const response = await fetch(`${backendUrl}/attendance/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ classGroupId: groupId, studentId, date }),
+      });
+
+      if (!response.ok) {
+        // Extraer el mensaje de error del cuerpo de la respuesta
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "Error al registrar la asistencia manual."
+        );
+      }
+
+      const updatedAttendance = await response.json();
+
+      setGroups((prevGroups) =>
+        prevGroups.map((group) =>
+          group.id === groupId
+            ? {
+                ...group,
+                attendance: [...group.attendance, updatedAttendance],
+              }
+            : group
+        )
+      );
+
+      toast({
+        title: "Asistencia Registrada",
+        description: "La asistencia fue registrada correctamente.",
+      });
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description:
+          error.message || "No se pudo registrar la asistencia manual.",
+        variant: "destructive",
+      });
+    }
   };
 
   const filteredAttendance = selectedGroup?.attendance.filter((record) =>
-    filterDate ? record.date === filterDate : true
+    filterDate
+      ? new Date(record.attendedAt).toISOString().split("T")[0] === filterDate
+      : true
   );
 
   return (
@@ -160,12 +179,28 @@ export default function AttendanceByGroup() {
               </TableHeader>
               <TableBody>
                 {filteredAttendance?.length > 0 ? (
-                  filteredAttendance.map((record) => (
-                    <TableRow key={record.id}>
-                      <TableCell>{record.name}</TableCell>
-                      <TableCell>{record.email}</TableCell>
-                      <TableCell>{record.date}</TableCell>
-                      <TableCell>{record.status}</TableCell>
+                  filteredAttendance.map((record, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{record.studentName}</TableCell>
+                      <TableCell>{record.studentEmail}</TableCell>
+                      <TableCell>
+                        {
+                          new Date(record.attendedAt)
+                            .toISOString()
+                            .split("T")[0]
+                        }
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            record.status === "Present"
+                              ? "success"
+                              : "secondary"
+                          }
+                        >
+                          {record.status}
+                        </Badge>
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
@@ -181,66 +216,5 @@ export default function AttendanceByGroup() {
         </div>
       )}
     </div>
-  );
-}
-
-function ManualAttendanceDialog({
-  group,
-  onManualAttendance,
-}: {
-  group: Group;
-  onManualAttendance: (
-    groupId: string,
-    studentId: string,
-    date: string
-  ) => void;
-}) {
-  const [selectedStudent, setSelectedStudent] = useState("");
-  const [attendanceDate, setAttendanceDate] = useState("");
-
-  const handleSubmit = () => {
-    if (selectedStudent && attendanceDate) {
-      onManualAttendance(group.id, selectedStudent, attendanceDate);
-      setSelectedStudent("");
-      setAttendanceDate("");
-    }
-  };
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button>Registrar Manualmente</Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Registrar Asistencia Manual</DialogTitle>
-          <DialogDescription>
-            Seleccione un estudiante y una fecha para registrar la asistencia.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <Select onValueChange={setSelectedStudent}>
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccionar Estudiante" />
-            </SelectTrigger>
-            <SelectContent>
-              {group.students.map((student) => (
-                <SelectItem key={student.id} value={student.id}>
-                  {student.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Input
-            type="date"
-            value={attendanceDate}
-            onChange={(e) => setAttendanceDate(e.target.value)}
-          />
-        </div>
-        <DialogFooter>
-          <Button onClick={handleSubmit}>Registrar</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
