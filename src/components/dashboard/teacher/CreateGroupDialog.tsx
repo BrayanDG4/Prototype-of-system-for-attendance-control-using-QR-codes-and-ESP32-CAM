@@ -2,6 +2,7 @@
 
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,6 +40,8 @@ export default function CreateGroupDialog({
 }: {
   onCreate: (data: GroupFormData) => void;
 }) {
+  const { user } = useUser(); // Obtener el usuario autenticado desde Clerk
+
   const form = useForm<GroupFormData>({
     resolver: zodResolver(groupSchema),
     defaultValues: {
@@ -54,9 +57,35 @@ export default function CreateGroupDialog({
     control: form.control,
   });
 
-  const onSubmit = (data: GroupFormData) => {
-    onCreate(data);
-    form.reset();
+  const onSubmit = async (data: GroupFormData) => {
+    if (!user?.id) {
+      console.error("No se encontró el ID del usuario autenticado.");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:4000/class-group", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...data,
+          teacherId: user.id,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error: ${response.status} - ${errorText}`);
+      }
+
+      const createdGroup = await response.json();
+      onCreate(createdGroup);
+      form.reset();
+    } catch (error) {
+      console.error("Error al crear el grupo:", error);
+    }
   };
 
   return (

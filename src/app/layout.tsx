@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ClerkProvider, ClerkLoading, ClerkLoaded } from "@clerk/nextjs";
+import { QueryProvider } from "@/components/QueryProvider";
+import { Toaster } from "@/components/ui/toaster"; // Importar el Toaster
 import "./globals.css";
 
 const geistSans = Geist({
@@ -37,9 +39,14 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <ClerkLoading>
-              <div>clerk is loading...</div>
+              <div>Clerk is loading...</div>
             </ClerkLoading>
-            <ClerkLoaded>{children}</ClerkLoaded>
+            <ClerkLoaded>
+              <QueryProvider>
+                {children}
+                <Toaster /> {/* Agregamos el Toaster aquí */}
+              </QueryProvider>
+            </ClerkLoaded>
           </ThemeProvider>
         </body>
       </html>

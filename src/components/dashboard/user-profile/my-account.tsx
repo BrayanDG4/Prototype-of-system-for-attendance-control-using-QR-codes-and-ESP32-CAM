@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import {
   Card,
   CardContent,
@@ -17,9 +16,55 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@clerk/nextjs";
+import { Switch } from "@radix-ui/react-switch";
 
 export function MyAccount() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileData, setProfileData] = useState({
+    name: "",
+    fullName: "",
+    phone: "",
+    email: "",
+    address: "",
+    role: "",
+  });
+  const { toast } = useToast();
+  const { user } = useUser();
+
+  // Fetch user data from the backend
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch(
+          `/api/get-user-profile?userId=${user?.id}`
+        );
+        if (!response.ok) {
+          throw new Error("Error al obtener los datos del usuario");
+        }
+        const data = await response.json();
+        setProfileData({
+          name: data.name || "",
+          fullName: data.fullName || data.name || "",
+          phone: data.phone || "",
+          email: data.email || "",
+          address: data.address || "",
+          role: data.role || "",
+        });
+        setProfileImage(user?.imageUrl || "");
+      } catch (error) {
+        toast({
+          description: `Error al cargar los datos del perfil: ${(error as Error).message}`,
+          variant: "destructive",
+        });
+      }
+    };
+
+    if (user?.id) {
+      fetchUserData();
+    }
+  }, [user, toast]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -32,6 +77,43 @@ export function MyAccount() {
     }
   };
 
+  const handleInputChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { id, value } = event.target;
+    setProfileData({ ...profileData, [id]: value });
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const response = await fetch("/api/update-profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user?.id,
+          ...profileData,
+          profileImage,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "No se pudo actualizar el perfil");
+      }
+
+      toast({ description: "Perfil actualizado exitosamente." });
+    } catch (error) {
+      toast({
+        description: `Error al actualizar el perfil: ${
+          (error as Error).message
+        }`,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Tabs defaultValue="personal-info" className="w-full">
       <TabsList className="grid w-full grid-cols-4">
@@ -40,6 +122,8 @@ export function MyAccount() {
         <TabsTrigger value="notifications">Notificaciones</TabsTrigger>
         <TabsTrigger value="danger-zone">Zona de Peligro</TabsTrigger>
       </TabsList>
+
+      {/* Tab: Información Personal */}
       <TabsContent value="personal-info">
         <Card>
           <CardHeader>
@@ -48,7 +132,7 @@ export function MyAccount() {
               Actualiza tu información personal y foto de perfil.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-8">
             <div className="flex items-center space-x-4">
               <Avatar className="h-24 w-24 cursor-pointer">
                 <AvatarImage src={profileImage || ""} />
@@ -68,35 +152,55 @@ export function MyAccount() {
                 </p>
               </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="fullName">Nombre Completo</Label>
-              <Input id="fullName" placeholder="Juan Pérez" />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="phone">Teléfono</Label>
-              <Input id="phone" type="tel" placeholder="+34 600 000 000" />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="email">Correo Electrónico</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="juan.perez@ejemplo.com"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="address">Dirección</Label>
-              <Textarea
-                id="address"
-                placeholder="Calle Ejemplo, 123, 28001 Madrid"
-              />
+            <div className="grid gap-4">
+              <div>
+                <Label htmlFor="fullName">Nombre Completo</Label>
+                <Input
+                  id="fullName"
+                  placeholder="Juan Pérez"
+                  value={profileData.fullName}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div>
+                <Label htmlFor="phone">Teléfono</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="300 000 0000"
+                  value={profileData.phone}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div>
+                <Label htmlFor="email">Correo Electrónico</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={profileData.email}
+                  disabled // No editable
+                />
+              </div>
+              <div>
+                <Label htmlFor="address">Dirección</Label>
+                <Textarea
+                  id="address"
+                  placeholder="Calle Ejemplo, 123, 28001 Madrid"
+                  value={profileData.address}
+                  onChange={handleInputChange}
+                />
+              </div>
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="cursor-pointer">Guardar Cambios</Button>
+            <Button onClick={handleSubmit} className="cursor-pointer">
+              Guardar Cambios
+            </Button>
           </CardFooter>
         </Card>
       </TabsContent>
+
+      {/* Seguridad */}
       <TabsContent value="security">
         <Card>
           <CardHeader>
@@ -106,15 +210,15 @@ export function MyAccount() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-2">
+            <div className="grid gap-4">
               <Label htmlFor="current-password">Contraseña Actual</Label>
               <Input id="current-password" type="password" />
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-4">
               <Label htmlFor="new-password">Nueva Contraseña</Label>
               <Input id="new-password" type="password" />
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-4">
               <Label htmlFor="confirm-password">
                 Confirmar Nueva Contraseña
               </Label>
@@ -126,6 +230,8 @@ export function MyAccount() {
           </CardFooter>
         </Card>
       </TabsContent>
+
+      {/* Notificaciones */}
       <TabsContent value="notifications">
         <Card>
           <CardHeader>
@@ -136,7 +242,7 @@ export function MyAccount() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 <Label>Notificaciones por Correo</Label>
                 <p className="text-sm text-muted-foreground">
                   Recibe actualizaciones importantes por correo electrónico.
@@ -145,7 +251,7 @@ export function MyAccount() {
               <Switch className="cursor-pointer" />
             </div>
             <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 <Label>Notificaciones Push</Label>
                 <p className="text-sm text-muted-foreground">
                   Recibe notificaciones push en tu dispositivo.
@@ -156,6 +262,8 @@ export function MyAccount() {
           </CardContent>
         </Card>
       </TabsContent>
+
+      {/* Zona de Peligro */}
       <TabsContent value="danger-zone">
         <Card>
           <CardHeader>
@@ -166,7 +274,7 @@ export function MyAccount() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 <Label>Eliminar Cuenta</Label>
                 <p className="text-sm text-muted-foreground">
                   Elimina permanentemente tu cuenta y todos tus datos.

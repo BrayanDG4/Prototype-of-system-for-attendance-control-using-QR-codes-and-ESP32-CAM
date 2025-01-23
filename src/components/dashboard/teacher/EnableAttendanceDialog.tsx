@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { attendanceSchema } from "@/lib/schemas/attendanceSchema";
 import { z } from "zod";
+import { useState } from "react";
 
 type AttendanceFormData = z.infer<typeof attendanceSchema>;
 
@@ -39,6 +40,7 @@ export default function EnableAttendanceDialog({
   groupIndex: number;
   onEnable: (groupIndex: number, duration: string) => void;
 }) {
+  const [open, setOpen] = useState(false); // Estado para manejar el diálogo
   const form = useForm<AttendanceFormData>({
     resolver: zodResolver(attendanceSchema),
     defaultValues: {
@@ -47,11 +49,12 @@ export default function EnableAttendanceDialog({
   });
 
   const onSubmit = (data: AttendanceFormData) => {
-    onEnable(groupIndex, data.duration);
+    onEnable(groupIndex, data.duration); // Llamar a la función pasada como prop
+    setOpen(false); // Cerrar el diálogo después de enviar los datos
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">Habilitar Asistencias</Button>
       </DialogTrigger>
@@ -71,7 +74,7 @@ export default function EnableAttendanceDialog({
                 <FormItem>
                   <FormLabel>Duración (minutos)</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccione" />
                       </SelectTrigger>

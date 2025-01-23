@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,12 +42,44 @@ const rolePermissions = {
 
 export function DashboardContent({ role }: { role: string }) {
   const router = useRouter();
-
-  // Simulación de estado del perfil del usuario
+  const { user } = useUser();
   const [isProfileComplete, setIsProfileComplete] = useState(false);
 
+  useEffect(() => {
+    const checkProfileCompletion = async () => {
+      // Verificar si el usuario está autenticado y tiene un ID válido
+      if (!user?.id) {
+        console.error("No se encontró el ID del usuario en Clerk.");
+        return;
+      }
+
+      try {
+        // Construir la URL correcta
+        const apiUrl = `http://localhost:4000/user/${user.id}/is-profile-complete`;
+
+        const response = await fetch(apiUrl);
+
+        if (!response.ok) {
+          throw new Error(
+            `Error en la solicitud: ${response.status} - ${response.statusText}`
+          );
+        }
+
+        const data = await response.json();
+        setIsProfileComplete(data.isProfileComplete);
+      } catch (error) {
+        console.error(
+          "Error al verificar si el perfil está completo:",
+          (error as Error).message
+        );
+      }
+    };
+
+    checkProfileCompletion();
+  }, [user]);
+
   const { canViewReports, canViewAnalytics, canViewNotifications } =
-    rolePermissions[role] || rolePermissions["guest"]; // Fallback para evitar errores
+    rolePermissions[role] || rolePermissions["guest"];
 
   const renderOverviewContent = () => {
     if (role === "student") {
@@ -109,7 +142,6 @@ export function DashboardContent({ role }: { role: string }) {
       );
     }
 
-    // Vista para admin y teacher
     return (
       <>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -162,7 +194,7 @@ export function DashboardContent({ role }: { role: string }) {
               <CardTitle>Resumen</CardTitle>
             </CardHeader>
             <CardContent className="pl-2">
-              <Overview />
+              <Overview data={{ /* your data here */ }} />
             </CardContent>
           </Card>
           <Card className="col-span-3">

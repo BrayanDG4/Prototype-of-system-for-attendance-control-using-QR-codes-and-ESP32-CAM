@@ -34,10 +34,12 @@ export async function POST(req: NextRequest) {
   const { type, data } = payload;
 
   if (type === "user.created") {
+    const { id: clerkId, email_addresses } = data;
+
     try {
-      // Usar la API de Clerk para actualizar los metadatos públicos
-      const response = await fetch(
-        `https://api.clerk.dev/v1/users/${data.id}`,
+      // Asignar rol 'student' por defecto en Clerk
+      const clerkResponse = await fetch(
+        `https://api.clerk.dev/v1/users/${clerkId}`,
         {
           method: "PATCH",
           headers: {
@@ -52,20 +54,46 @@ export async function POST(req: NextRequest) {
         }
       );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Failed to update user role:", errorData);
+      if (!clerkResponse.ok) {
+        const errorData = await clerkResponse.json();
+        console.error("Failed to update user role in Clerk:", errorData);
         return NextResponse.json(
-          { error: "Failed to update user role" },
-          { status: response.status }
+          { error: "Failed to update user role in Clerk" },
+          { status: clerkResponse.status }
         );
       }
 
-      console.log(`Assigned role "student" to user ${data.id}`);
+      console.log(`Assigned role "student" to user ${clerkId}`);
+
+      // Enviar el userId y email al backend para procesamiento adicional
+      const backendResponse = await fetch(
+        `${process.env.NEST_BACKEND_URL}/user/create-student`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: clerkId,
+            email: email_addresses[0]?.email_address || "unknown@example.com",
+          }),
+        }
+      );
+
+      if (!backendResponse.ok) {
+        const errorData = await backendResponse.json();
+        console.error("Failed to send user to backend:", errorData);
+        return NextResponse.json(
+          { error: "Failed to send user to backend" },
+          { status: backendResponse.status }
+        );
+      }
+
+      console.log(`User sent to backend with ID ${clerkId}`);
     } catch (err) {
-      console.error("Failed to assign role:", err);
+      console.error("Error processing user:", err);
       return NextResponse.json(
-        { error: "Failed to update user role" },
+        { error: "Failed to process user" },
         { status: 500 }
       );
     }
