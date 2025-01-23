@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -11,167 +11,227 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
-type Attendance = {
-  date: string;
-  status: "Present" | "Absent";
-};
+import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@clerk/nextjs";
 
 type Group = {
   id: string;
   name: string;
   room: string;
-  schedule: { day: string; startTime: string; endTime: string }[];
-  attendance: Attendance[];
+  schedule: { day: string; startTime: string; endTime: string }[] | null;
 };
 
-const studentGroups: Group[] = [
-  {
-    id: "1",
-    name: "Matemáticas Avanzadas",
-    room: "Salón 201",
-    schedule: [
-      { day: "Lunes", startTime: "10:00", endTime: "12:00" },
-      { day: "Miércoles", startTime: "10:00", endTime: "12:00" },
-    ],
-    attendance: [
-      { date: "2025-01-09", status: "Present" },
-      { date: "2025-01-10", status: "Absent" },
-    ],
-  },
-  {
-    id: "2",
-    name: "Ciencias Naturales",
-    room: "Salón 305",
-    schedule: [{ day: "Viernes", startTime: "14:00", endTime: "16:00" }],
-    attendance: [{ date: "2025-01-09", status: "Present" }],
-  },
-];
-
 export default function StudentGroups() {
-  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
-  const [filterDate, setFilterDate] = useState("");
+  const [allGroups, setAllGroups] = useState<Group[]>([]);
+  const [enrolledGroups, setEnrolledGroups] = useState<Group[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [accessCode, setAccessCode] = useState("");
+  const { toast } = useToast();
+  const { user } = useUser();
 
-  const filteredAttendance = selectedGroup?.attendance.filter((record) =>
-    filterDate ? record.date === filterDate : true
-  );
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL;
+        const allGroupsResponse = await fetch(`${backendUrl}/class-group`);
+        if (!allGroupsResponse.ok) {
+          throw new Error("Error al obtener todos los grupos.");
+        }
+        const allGroupsData = await allGroupsResponse.json();
+        setAllGroups(allGroupsData.groups || []);
 
-  const calculateAttendanceSummary = () => {
-    if (!selectedGroup) return { total: 0, present: 0, percentage: 0 };
-    const total = selectedGroup.attendance.length;
-    const present = selectedGroup.attendance.filter(
-      (record) => record.status === "Present"
-    ).length;
-    const percentage = ((present / total) * 100).toFixed(2);
-    return { total, present, percentage };
+        if (user?.id) {
+          const enrolledResponse = await fetch(
+            `${backendUrl}/class-group/enrolled/${user.id}`
+          );
+          if (!enrolledResponse.ok) {
+            throw new Error("Error al obtener los grupos inscritos.");
+          }
+          const enrolledData = await enrolledResponse.json();
+          setEnrolledGroups(Array.isArray(enrolledData) ? enrolledData : []);
+        }
+      } catch (error: any) {
+        console.error(error);
+        toast({
+          title: "Error",
+          description: error.message || "Ocurrió un error al cargar los datos.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchGroups();
+  }, [toast, user?.id]);
+
+  const handleEnroll = async () => {
+    if (!selectedGroupId || !accessCode || !user?.id) {
+      toast({
+        title: "Error",
+        description: "Por favor, complete todos los campos.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL;
+      const response = await fetch(`${backendUrl}/class-group/enroll`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          accessCode,
+          studentId: user.id,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Error al matricularse al grupo.");
+      }
+
+      const enrolledGroup = allGroups.find(
+        (group) => group.id === selectedGroupId
+      );
+      if (enrolledGroup) {
+        setEnrolledGroups((prev) => [...prev, enrolledGroup]);
+        setAllGroups((prev) =>
+          prev.filter((group) => group.id !== selectedGroupId)
+        );
+      }
+
+      toast({
+        title: "Éxito",
+        description: "Te has matriculado correctamente al grupo.",
+      });
+
+      setSelectedGroupId(null);
+      setAccessCode("");
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo completar la matrícula.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const attendanceSummary = calculateAttendanceSummary();
+  const availableGroups = Array.isArray(allGroups)
+    ? allGroups.filter(
+        (group) => !enrolledGroups.some((enrolled) => enrolled.id === group.id)
+      )
+    : [];
 
   return (
     <div className="px-4 py-6 space-y-6">
       <h2 className="text-2xl font-bold">Mis Grupos</h2>
-      {!selectedGroup ? (
-        <>
-          <Input
-            placeholder="Buscar por nombre"
-            onChange={(e) => setFilterDate(e.target.value)}
-            className="mb-4"
-          />
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Salón</TableHead>
-                  <TableHead>Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {studentGroups.map((group) => (
+
+      {/* Tabla de grupos inscritos */}
+      <div>
+        <h3 className="text-xl font-bold mb-4">Grupos Inscritos</h3>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nombre</TableHead>
+                <TableHead>Salón</TableHead>
+                <TableHead>Horario</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {enrolledGroups.length > 0 ? (
+                enrolledGroups.map((group) => (
                   <TableRow key={group.id}>
                     <TableCell>{group.name}</TableCell>
                     <TableCell>{group.room}</TableCell>
                     <TableCell>
-                      <Button size="sm" onClick={() => setSelectedGroup(group)}>
-                        Ver Asistencia
+                      {Array.isArray(group.schedule)
+                        ? group.schedule
+                            .map(
+                              (schedule) =>
+                                `${schedule.day}: ${schedule.startTime} - ${schedule.endTime}`
+                            )
+                            .join(", ")
+                        : "Horario no disponible"}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center">
+                    No estás inscrito en ningún grupo.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Tabla de grupos disponibles */}
+      <div>
+        <h3 className="text-xl font-bold mb-4">Grupos Disponibles</h3>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nombre</TableHead>
+                <TableHead>Salón</TableHead>
+                <TableHead>Horario</TableHead>
+                <TableHead>Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {availableGroups.length > 0 ? (
+                availableGroups.map((group) => (
+                  <TableRow key={group.id}>
+                    <TableCell>{group.name}</TableCell>
+                    <TableCell>{group.room}</TableCell>
+                    <TableCell>
+                      {Array.isArray(group.schedule)
+                        ? group.schedule
+                            .map(
+                              (schedule) =>
+                                `${schedule.day}: ${schedule.startTime} - ${schedule.endTime}`
+                            )
+                            .join(", ")
+                        : "Horario no disponible"}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        size="sm"
+                        onClick={() => setSelectedGroupId(group.id)}
+                      >
+                        Matricularse
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </>
-      ) : (
-        <>
-          <Button variant="outline" onClick={() => setSelectedGroup(null)}>
-            Volver a Grupos
-          </Button>
-          <h3 className="text-xl font-bold">
-            Asistencias en {selectedGroup.name}
-          </h3>
-          <div className="space-y-4">
-            <div className="rounded-md border p-4">
-              <p>
-                <strong>Salón:</strong> {selectedGroup.room}
-              </p>
-              <p>
-                <strong>Horario:</strong>{" "}
-                {selectedGroup.schedule
-                  .map(
-                    (schedule) =>
-                      `${schedule.day}: ${schedule.startTime} - ${schedule.endTime}`
-                  )
-                  .join(", ")}
-              </p>
-              <p>
-                <strong>Sesiones Totales:</strong> {attendanceSummary.total}
-              </p>
-              <p>
-                <strong>Asistencias:</strong> {attendanceSummary.present}
-              </p>
-              <p>
-                <strong>Porcentaje de Asistencia:</strong>{" "}
-                {attendanceSummary.percentage}%
-              </p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Input
-                type="date"
-                value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
-                placeholder="Filtrar por fecha"
-              />
-            </div>
-            <div className="rounded-md border mt-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Estado</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAttendance?.length ? (
-                    filteredAttendance.map((record, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{record.date}</TableCell>
-                        <TableCell>{record.status}</TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={2} className="text-center">
-                        No hay registros de asistencia.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        </>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center">
+                    No hay grupos disponibles.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Formulario de matrícula */}
+      {selectedGroupId && (
+        <div className="space-y-4">
+          <h3 className="text-xl font-bold">Matricularse en el Grupo</h3>
+          <Input
+            placeholder="Clave de acceso"
+            value={accessCode}
+            onChange={(e) => setAccessCode(e.target.value)}
+          />
+          <Button onClick={handleEnroll}>Confirmar Matrícula</Button>
+        </div>
       )}
     </div>
   );
