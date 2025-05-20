@@ -1,60 +1,62 @@
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import dashboardImage1 from "../../assets/homepage/dashboard1.png";
+import dashboardImage2 from "../../assets/homepage/dashboard2.png";
+import dashboardImage3 from "../../assets/homepage/dashboard3.png";
+import img1 from "../../assets/homepage/img1.png";
+import img2 from "../../assets/homepage/img2.png";
+
 
 export default function ShowcaseGrid() {
   const showcaseItems = [
     {
-      title: "Dashboard Overview",
-      description:
-        "Complete analytics dashboard with real-time data visualization",
-      imageUrl: "/placeholder.svg",
+      title: "Settings Panel",
+      description: "Customizable user preferences",
+      imageUrl: dashboardImage2,
       width: 500,
-      height: 300,
+      height: 500,
       className: "md:col-span-2",
     },
-    {
-      title: "Mobile Experience",
-      description: "Responsive design that works on any device",
-      imageUrl: "/placeholder.svg",
-      width: 300,
-      height: 400,
-      className: "md:row-span-1",
-    },
+
     {
       title: "Quick Actions",
       description: "Efficient workflow with one-click actions",
-      imageUrl: "/placeholder.svg",
-      width: 300,
-      height: 300,
+      imageUrl: dashboardImage3,
+      width: 600,
+      height: 600,
+      className: "md:col-span-2",
     },
     {
       title: "Data Tables",
       description: "Powerful data management and filtering",
-      imageUrl: "/placeholder.svg",
+      imageUrl: img1,
       width: 500,
-      height: 300,
+      height: 500,
       className: "md:col-span-1",
-    },
-    {
-      title: "Settings Panel",
-      description: "Customizable user preferences",
-      imageUrl: "/placeholder.svg",
-      width: 300,
-      height: 300,
     },
     {
       title: "Analytics Charts",
       description: "Beautiful data visualization",
-      imageUrl: "/placeholder.svg",
-      width: 300,
-      height: 300,
+      imageUrl: img2,
+      width: 500,
+      height: 500,
+      className: "md:col-span-1 flex items-center justify-center",
+    },
+    {
+      title: "Dashboard Overview",
+      description:
+        "Complete analytics dashboard with real-time data visualization",
+      imageUrl: dashboardImage1,
+      width: 600,
+      height: 600,
+      className: "md:col-span-2",
     },
   ];
 
   return (
-    <div className="container px-4 py-12 mx-auto">
-      <div className="text-center mb-12">
+    <div id="about" className="container px-4 py-12 mx-auto">
+      <div className="text-center mb-12 py-5">
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
           Descubre nuestra plataforma
         </h2>
@@ -72,7 +74,7 @@ export default function ShowcaseGrid() {
               item.className
             )}
           >
-            <div className="relative aspect-[4/3] overflow-hidden">
+            <div className="relative overflow-hidden">
               <Image
                 src={item.imageUrl}
                 alt={item.title}

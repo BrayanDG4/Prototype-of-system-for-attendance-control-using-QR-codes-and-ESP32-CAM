@@ -15,12 +15,13 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import checkIcon from "../../assets/homepage/check-icon.png";
+import Image from "next/image";
 
 const navItems = [
-  { title: "Home", href: "/" },
-  { title: "Features", href: "/features" },
-  { title: "Pricing", href: "/pricing" },
-  { title: "About", href: "/about" },
+  { title: "Inicio", href: "/" },
+  { title: "Nuestra plataforma", href: "#about" },
+  { title: "Contacto", href: "#footer" },
 ];
 
 export function Navbar() {
@@ -29,10 +30,14 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
-      <div className="container flex h-16 items-center px-4 sm:px-6 lg:px-8">
+      <div className="container flex h-16 w-full items-center px-4 sm:px-6 lg:px-8">
         <div className="mr-6 hidden md:flex">
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <span className="hidden font-bold sm:inline-block">YourLogo</span>
+            <Image src={checkIcon} alt="Attendify" width={20} height={20} />
+
+            <span className="hidden font-bold sm:inline-block text-2xl">
+              Attendify
+            </span>
           </Link>
           <NavigationMenu>
             <NavigationMenuList>
@@ -66,7 +71,8 @@ export function Navbar() {
               className="flex items-center"
               onClick={() => setIsOpen(false)}
             >
-              <span className="font-bold">YourLogo</span>
+              <Image src={checkIcon} alt="Attendify" width={20} height={20} />
+              <span className="px-2 text-xl font-bold">Attendify</span>
             </Link>
             <div className="my-4 flex flex-col space-y-3">
               {navItems.map((item) => (
@@ -75,7 +81,7 @@ export function Navbar() {
                   href={item.href}
                   onClick={() => setIsOpen(false)}
                   className={cn(
-                    "text-foreground/70 transition-colors hover:text-foreground",
+                    "text-foreground/70  transition-colors hover:text-foreground",
                     pathname === item.href && "text-foreground"
                   )}
                 >
@@ -86,15 +92,17 @@ export function Navbar() {
           </SheetContent>
         </Sheet>
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          <div className="w-full flex-1 md:w-auto md:flex-none"></div>
+          <div className="w-full flex-1 md:w-auto md:flex-none">
           <nav className="flex items-center space-x-4">
             <Button variant="ghost" asChild>
-              <Link href="/sign-in">Log in</Link>
+              <Link href="/sign-in">Iniciar sesión</Link>
             </Button>
             <Button asChild>
-              <Link href="/sign-up">Sign up</Link>
+              <Link href="/sign-up">Registrarse</Link>
             </Button>
           </nav>
+          </div>
+          
         </div>
       </div>
     </header>

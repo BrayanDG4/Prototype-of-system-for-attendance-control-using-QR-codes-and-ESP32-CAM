@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
 
       // Enviar el userId y email al backend para procesamiento adicional
       const backendResponse = await fetch(
-        `${process.env.NEST_BACKEND_URL}/user/create-student`,
+        `${process.env.NEXT_PUBLIC_NEST_BACKEND_URL}/user/create-student`,
         {
           method: "POST",
           headers: {

@@ -118,12 +118,6 @@ export default function TeacherGroups() {
         throw new Error("ID del grupo no encontrado.");
       }
 
-      if (!backendUrl) {
-        throw new Error(
-          "No se encontró la URL del backend en las variables de entorno."
-        );
-      }
-
       const response = await fetch(
         `${backendUrl}/class-group/${groupId}/attendance`,
         {
@@ -139,22 +133,19 @@ export default function TeacherGroups() {
         throw new Error("Error al habilitar la asistencia");
       }
 
-      const updatedGroup: Group = await response.json();
+      // 🔄 Volver a consultar el grupo actualizado desde el backend
+      const updatedGroupRes = await fetch(
+        `${backendUrl}/class-group/${groupId}`
+      );
+      const updatedGroup = await updatedGroupRes.json();
 
-      // Actualiza el estado del grupo con la asistencia habilitada
+      // 🧠 Actualizar el estado local con el grupo actualizado
       setGroups((prev) =>
         prev.map((group, index) =>
-          index === groupIndex
-            ? {
-                ...group,
-                attendanceEnabled: true,
-                attendanceEndsAt: updatedGroup.attendanceEndsAt,
-              }
-            : group
+          index === groupIndex ? { ...updatedGroup } : group
         )
       );
 
-      // Mostrar notificación de éxito
       toast({
         title: "Asistencia habilitada",
         description: `La asistencia para el grupo "${updatedGroup.name}" ha sido habilitada por ${duration} minutos.`,
@@ -217,7 +208,9 @@ export default function TeacherGroups() {
                     </ul>
                   </TableCell>
                   <TableCell>
-                    {group.attendanceEnabled ? (
+                    {group.attendanceEnabled &&
+                    group.attendanceEndsAt &&
+                    new Date(group.attendanceEndsAt) > new Date() ? (
                       <Badge variant="success">Activo</Badge>
                     ) : (
                       <Badge variant="secondary">Inactivo</Badge>

@@ -46,15 +46,6 @@ export const sidebarOptions = {
       icon: ClipboardList,
       items: null,
     },
-    {
-      label: "Class Management",
-      href: "/dashboard/teacher/classes",
-      icon: BookOpen,
-      items: [
-        { title: "Add Class", href: "/dashboard/teacher/classes/add" },
-        { title: "View Classes", href: "/dashboard/teacher/classes/view" },
-      ],
-    },
   ],
   student: [
     {

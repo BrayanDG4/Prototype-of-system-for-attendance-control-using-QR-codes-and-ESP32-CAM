@@ -13,7 +13,7 @@ export async function GET(req: Request) {
     }
 
     const response = await fetch(
-      `${process.env.NEST_BACKEND_URL}/user/${userId}/profile`,
+      `${process.env.NEXT_PUBLIC_NEST_BACKEND_URL}/user/${userId}/profile`,
       {
         method: "GET",
         headers: {

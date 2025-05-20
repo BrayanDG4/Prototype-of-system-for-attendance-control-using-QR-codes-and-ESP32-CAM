@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
+import checkIcon from "../../assets/homepage/check-white.png";
+import Image from "next/image";
 
 const productLinks = [
   { title: "Overview", href: "/overview" },
@@ -31,16 +33,24 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="border-t bg-black text-white dark:bg-background dark:text-foreground">
+    <footer
+      id="footer"
+      className="border-t bg-black text-white dark:bg-background dark:text-foreground"
+    >
       <div className="container mx-12 px-4 py-12 md:py-16 lg:py-20">
         <div className="grid gap-8 lg:grid-cols-12">
           <div className="lg:col-span-4">
-            <Link href="/" className="flex items-center space-x-2">
-              <span className="text-2xl font-bold">Shadcnblocks</span>
+            <Link href="/" className="mr-6 flex items-center space-x-2">
+              <Image src={checkIcon} alt="Attendify" width={30} height={30} />
+
+              <span className="hidden font-bold sm:inline-block text-2xl">
+                Attendify
+              </span>
             </Link>
             <p className="mt-4 text-sm text-gray-400 dark:text-gray-400">
-              A collection of 100+ responsive HTML templates for your startup
-              business or side project.
+              Optimiza el registro de asistencias en tiempo real y obtén
+              reportes detallados con solo unos clics. Simplifica la gestión y
+              toma decisiones informadas.
             </p>
             <div className="mt-6 flex space-x-4">
               {socialLinks.map((social, i) => {
@@ -59,7 +69,7 @@ export function Footer() {
             </div>
           </div>
           <div className="grid gap-8 sm:grid-cols-3 lg:col-span-8">
-            <div>
+            {/* <div>
               <h3 className="text-sm font-semibold">Product</h3>
               <ul className="mt-4 space-y-3 text-sm">
                 {productLinks.map((link) => (
@@ -73,7 +83,7 @@ export function Footer() {
                   </li>
                 ))}
               </ul>
-            </div>
+            </div> */}
             <div>
               <h3 className="text-sm font-semibold">Company</h3>
               <ul className="mt-4 space-y-3 text-sm">
@@ -109,9 +119,9 @@ export function Footer() {
         <div className="mt-12 border-t border-gray-800 pt-8 dark:border-gray-800">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             <p className="text-sm text-gray-400">
-              © 2024 Shadcnblocks. All rights reserved.
+              © 2025 Attendify. Todos los derechos reservados.
             </p>
-            <div className="flex gap-4 mr-8">
+            {/* <div className="flex gap-4 mr-8">
               <Link
                 href="/terms"
                 className="text-sm text-gray-400 hover:text-white dark:hover:text-foreground"
@@ -124,7 +134,14 @@ export function Footer() {
               >
                 Privacy Policy
               </Link>
-            </div>
+            </div> */}
+            <Link href="/" className="mr-6 flex items-center space-x-2">
+              <Image src={checkIcon} alt="Attendify" width={30} height={30} />
+
+              <span className="hidden font-bold sm:inline-block text-2xl">
+                Attendify
+              </span>
+            </Link>
           </div>
         </div>
       </div>

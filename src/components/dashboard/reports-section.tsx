@@ -1,25 +1,12 @@
-import { Button } from "@/components/ui/button"
+"use client";
 
-const reportes = [
-  { id: 1, nombre: "Reporte de Asistencia Mensual", formato: "PDF" },
-  { id: 2, nombre: "Análisis de Fallas", formato: "PDF" },
-  { id: 3, nombre: "Estadísticas por Género", formato: "PDF" },
-  { id: 4, nombre: "Resumen Anual", formato: "PDF" },
-]
+import { PDFReportDownloader } from "@/components/dashboard/PDFReportDownloader";
 
 export function ReportsSection() {
   return (
-    <div className="space-y-4">
-      {reportes.map((reporte) => (
-        <div key={reporte.id} className="flex items-center justify-between border-b pb-2">
-          <div>
-            <h3 className="text-lg font-medium">{reporte.nombre}</h3>
-            <p className="text-sm text-gray-500">Formato: {reporte.formato}</p>
-          </div>
-          <Button>Descargar</Button>
-        </div>
-      ))}
+    <div className="space-y-6">
+      <h3 className="text-xl font-semibold">Generar Reportes PDF</h3>
+      <PDFReportDownloader />
     </div>
-  )
+  );
 }
-

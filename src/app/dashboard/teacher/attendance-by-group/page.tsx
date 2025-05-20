@@ -35,13 +35,14 @@ export default function AttendanceByGroup() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [filterDate, setFilterDate] = useState(today);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { user } = useUser(); // Obtener datos del usuario autenticado
+  const { user } = useUser();
 
-  // Fetch groups from backend
   useEffect(() => {
     const fetchGroups = async () => {
       if (!user?.id) return;
+      setLoading(true);
       try {
         const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL;
         const response = await fetch(
@@ -59,6 +60,8 @@ export default function AttendanceByGroup() {
           description: "No se pudieron cargar los datos de los grupos.",
           variant: "destructive",
         });
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -74,14 +77,11 @@ export default function AttendanceByGroup() {
       const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL;
       const response = await fetch(`${backendUrl}/attendance/register`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ classGroupId: groupId, studentId, date }),
       });
 
       if (!response.ok) {
-        // Extraer el mensaje del error del cuerpo de la respuesta
         const errorData = await response.json();
         throw new Error(
           errorData.message || "Error al registrar la asistencia manual."
@@ -90,7 +90,6 @@ export default function AttendanceByGroup() {
 
       const updatedAttendance = await response.json();
 
-      // Actualizar la asistencia en el frontend
       setGroups((prevGroups) =>
         prevGroups.map((group) =>
           group.id === groupId
@@ -126,7 +125,12 @@ export default function AttendanceByGroup() {
   return (
     <div className="px-1 space-y-4">
       <h2 className="text-2xl font-bold">Asistencia por Grupo</h2>
-      {!selectedGroup ? (
+
+      {loading ? (
+        <p>Cargando grupos...</p>
+      ) : groups.length === 0 ? (
+        <p className="text-gray-600">No tienes grupos asignados.</p>
+      ) : !selectedGroup ? (
         <div className="rounded-md border">
           <Table>
             <TableHeader>
@@ -208,7 +212,7 @@ export default function AttendanceByGroup() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center">
-                      No hay registros de asistencia.
+                      No hay asistencias para esta fecha.
                     </TableCell>
                   </TableRow>
                 )}

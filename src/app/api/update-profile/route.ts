@@ -7,7 +7,7 @@ export async function PATCH(req: Request) {
 
     // Enviar los datos al backend NestJS
     const response = await fetch(
-      `${process.env.NEST_BACKEND_URL}/user/${body.userId}/profile`,
+      `${process.env.NEXT_PUBLIC_NEST_BACKEND_URL}/user/${body.userId}/profile`,
       {
         method: "PATCH",
         headers: {

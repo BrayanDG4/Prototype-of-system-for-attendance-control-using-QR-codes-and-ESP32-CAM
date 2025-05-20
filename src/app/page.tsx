@@ -17,7 +17,9 @@ export default function Home() {
       <UserButton />
       <main className="flex w-full flex-1 flex-col items-center justify-center">
         <HeroHomepage />
-        <ShowcaseGrid />
+        <section>
+          <ShowcaseGrid />
+        </section>
       </main>
       <Footer />
     </div>
