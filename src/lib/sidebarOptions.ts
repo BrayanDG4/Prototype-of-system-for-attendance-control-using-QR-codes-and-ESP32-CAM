@@ -1,4 +1,4 @@
-import { BookOpen, Users, ClipboardList, FileText, Home } from "lucide-react";
+import { BookOpen, Users, ClipboardList, FileText, Home, QrCode } from "lucide-react";
 
 export const sidebarOptions = {
   admin: [
@@ -62,6 +62,11 @@ export const sidebarOptions = {
       label: "Reportes",
       icon: FileText,
       href: "/dashboard/student/reports",
+    },
+    {
+      label: "Generar QR",
+      icon: QrCode,
+      href: "/dashboard/student/generate-qr",
     },
   ],
 };

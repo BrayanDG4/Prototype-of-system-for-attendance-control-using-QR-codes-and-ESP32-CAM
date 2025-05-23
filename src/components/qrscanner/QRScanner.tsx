@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function QRScanner() {
   const [scanned, setScanned] = useState("");
@@ -9,11 +9,31 @@ export default function QRScanner() {
   >("idle");
   const [message, setMessage] = useState("");
   const [locked, setLocked] = useState(false);
-  const [lastParsed, setLastParsed] = useState<{
-    email: string;
-    classGroupId: string;
-    timestamp: string;
-  } | null>(null);
+  const [lastToken, setLastToken] = useState<string | null>(null);
+
+  const successSoundRef = useRef<HTMLAudioElement | null>(null);
+  const errorSoundRef = useRef<HTMLAudioElement | null>(null);
+  const inactiveSoundRef = useRef<HTMLAudioElement | null>(null);
+  const duplicateSoundRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    successSoundRef.current = new Audio("/sounds/ACCESO_CORRECTO.mp3");
+    errorSoundRef.current = new Audio("/sounds/INTENTE_DE_NUEVO.mp3");
+    inactiveSoundRef.current = new Audio("/sounds/ASISTENCIA_NO_ACTIVA.mp3");
+    duplicateSoundRef.current = new Audio(
+      "/sounds/ASISTENCIA_YA_REGISTRADA.mp3"
+    );
+  }, []);
+
+  const playSound = (ref: React.RefObject<HTMLAudioElement | null>) => {
+    const audio = ref.current;
+    if (!audio) return;
+    audio.pause();
+    audio.currentTime = 0;
+    audio.play().catch((err) => {
+      console.warn("No se pudo reproducir el sonido:", err);
+    });
+  };
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -34,12 +54,12 @@ export default function QRScanner() {
   }, [scanned, locked]);
 
   const processScan = async (input: string) => {
-    const parsed = parseQRString(input);
-    console.log("[🔍 Objeto parseado]:", parsed);
+    const token = extractTokenFromQR(input);
 
-    if (!parsed) {
+    if (!token) {
       setStatus("error");
       setMessage("❌ Formato inválido del código QR.");
+      playSound(errorSoundRef);
       return;
     }
 
@@ -53,51 +73,54 @@ export default function QRScanner() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(parsed),
+          body: JSON.stringify({ token }),
         }
       );
 
       const data = await res.json();
-      setLastParsed(parsed);
+      setLastToken(token);
 
       if (data.success) {
         setStatus("success");
         setMessage("✅ Asistencia registrada correctamente.");
+        playSound(successSoundRef);
       } else {
         setStatus("error");
         setMessage(`❌ ${data.message}`);
+
+        const msg = data.message?.toLowerCase() || "";
+        if (
+          msg.includes("ya se ha registrado") ||
+          msg.includes("asistencia duplicada")
+        ) {
+          playSound(duplicateSoundRef);
+        } else if (
+          msg.includes("no está habilitada") ||
+          msg.includes("asistencia no activa")
+        ) {
+          playSound(inactiveSoundRef);
+        } else {
+          playSound(errorSoundRef);
+        }
       }
     } catch (error) {
       console.error("Error al registrar asistencia:", error);
       setStatus("error");
       setMessage("❌ Error al conectar con el servidor.");
+      playSound(errorSoundRef);
     }
 
-    // 🔓 Desbloquear después de 3 segundos
     setTimeout(() => {
       setLocked(false);
       setStatus("idle");
       setMessage("");
-      setLastParsed(null);
+      setLastToken(null);
     }, 3000);
   };
 
-  const parseQRString = (text: string) => {
-    try {
-      const emailMatch = text.match(/correoA(.*?)grupoA/);
-      const groupMatch = text.match(/grupoA(.*?)fechaA/);
-      const dateMatch = text.match(/fechaA(.+)$/);
-
-      if (!emailMatch || !groupMatch || !dateMatch) return null;
-
-      return {
-        email: emailMatch[1].replace("arrob", "@"),
-        classGroupId: groupMatch[1],
-        timestamp: dateMatch[1],
-      };
-    } catch {
-      return null;
-    }
+  const extractTokenFromQR = (text: string): string | null => {
+    const match = text.match(/firmaA(.+)$/);
+    return match ? match[1] : null;
   };
 
   return (
@@ -114,11 +137,9 @@ export default function QRScanner() {
         <span className="text-gray-400">Entrada:</span> {scanned || "..."}
       </div>
 
-      {lastParsed && (
-        <div className="text-xs text-gray-500 mb-2">
-          <strong>📧 Correo:</strong> {lastParsed.email} <br />
-          <strong>🆔 Grupo:</strong> {lastParsed.classGroupId} <br />
-          <strong>🕒 Fecha:</strong> {lastParsed.timestamp}
+      {lastToken && (
+        <div className="text-xs text-gray-500 mb-2 break-all">
+          <strong>🔑 Token enviado:</strong> {lastToken}
         </div>
       )}
 
