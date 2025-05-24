@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
 import { Loader2, Download } from "lucide-react";
-import QRCode from "qrcode"; // <-- usamos esta
+import QRCode from "qrcode";
 
 export default function GenerateQRPage() {
   const { user } = useUser();
@@ -56,7 +56,7 @@ export default function GenerateQRPage() {
       );
 
       const data = await response.json();
-      setQrValue(data.qrString); // ✅ usamos qrString directo
+      setQrValue(data.qrString); // ✅ ahora usamos C{email}G{group}F{timestamp}T{token}
     } catch (error) {
       console.error("Error al generar el QR:", error);
     } finally {

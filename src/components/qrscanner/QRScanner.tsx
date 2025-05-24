@@ -40,7 +40,7 @@ export default function QRScanner() {
       if (locked) return;
 
       if (e.key === "Enter") {
-        const cleaned = scanned.replace(/[^a-zA-Z0-9@:.°\-]/g, "");
+        const cleaned = scanned.replace(/[^a-zA-Z0-9@:.T\-]/g, "");
         console.log("[📦 Código limpio]:", cleaned);
         processScan(cleaned.trim());
         setScanned("");
@@ -54,9 +54,9 @@ export default function QRScanner() {
   }, [scanned, locked]);
 
   const processScan = async (input: string) => {
-    const token = extractTokenFromQR(input);
+    const parsed = parseFormattedQR(input);
 
-    if (!token) {
+    if (!parsed || !parsed.token) {
       setStatus("error");
       setMessage("❌ Formato inválido del código QR.");
       playSound(errorSoundRef);
@@ -73,12 +73,12 @@ export default function QRScanner() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token }),
+          body: JSON.stringify({ token: parsed.token }),
         }
       );
 
       const data = await res.json();
-      setLastToken(token);
+      setLastToken(parsed.token);
 
       if (data.success) {
         setStatus("success");
@@ -87,7 +87,6 @@ export default function QRScanner() {
       } else {
         setStatus("error");
         setMessage(`❌ ${data.message}`);
-
         const msg = data.message?.toLowerCase() || "";
         if (
           msg.includes("ya se ha registrado") ||
@@ -118,9 +117,14 @@ export default function QRScanner() {
     }, 3000);
   };
 
-  const extractTokenFromQR = (text: string): string | null => {
-    const match = text.match(/firmaA(.+)$/);
-    return match ? match[1] : null;
+  const parseFormattedQR = (text: string): { token: string } | null => {
+    try {
+      const match = text.match(/T(.+)$/); // busca firmaA... al final
+      if (!match) return null;
+      return { token: match[1] };
+    } catch {
+      return null;
+    }
   };
 
   return (
@@ -139,7 +143,7 @@ export default function QRScanner() {
 
       {lastToken && (
         <div className="text-xs text-gray-500 mb-2 break-all">
-          <strong>🔑 Token enviado:</strong> {lastToken}
+          <strong>🔑 Token:</strong> {lastToken}
         </div>
       )}
 
